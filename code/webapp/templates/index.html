@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suspicious IP Addresses</title>
+    <!-- Include Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        h1 {
+            margin-bottom: 20px;
+        }
+        table {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1 class="text-center">Suspicious IP Addresses</h1>
+    <table class="table table-striped table-bordered">
+        <thead class="thead-dark">
+        <tr>
+            <th>IP Address</th>
+            <th>Number of Failed Logins</th>
+            <th>Last Attempted Login</th>
+            <th>Report</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for ip, data in suspicious_ips.items() %}
+        <tr>
+            <td>{{ ip }}</td>
+            <td>{{ data.count }}</td>
+            <td>{{ data.last_attempt.strftime("%Y-%m-%d %H:%M:%S") }}</td>
+            <td>
+                <form action="/report" method="post" class="form-inline">
+                    <input type="hidden" name="ip_address" value="{{ ip }}">
+                    <button type="submit" class="btn btn-danger">Report</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+<!-- Include Bootstrap JS and dependencies -->
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

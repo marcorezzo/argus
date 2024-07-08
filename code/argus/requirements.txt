@@ -1,0 +1,5 @@
+elasticsearch
+elasticsearch_dsl
+kibana
+requests
+argparse

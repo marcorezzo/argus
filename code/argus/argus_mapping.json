@@ -1,0 +1,97 @@
+{
+  "mappings": {
+    "properties": {
+      "@timestamp": {
+        "type": "date"
+      },
+      "brute_force_attempts": {
+        "properties": {
+          "ip_address": {
+            "type": "keyword"
+          },
+          "blacklisted": {
+            "type": "boolean"
+          },
+          "ftp_failed_logins": {
+            "type": "integer"
+          },
+          "ssh_failed_logins": {
+            "type": "integer"
+          },
+          "timestamps": {
+            "type": "date"
+          },
+          "geolocation": {
+            "properties": {
+              "city": {
+                "type": "keyword"
+              },
+              "region": {
+                "type": "keyword"
+              },
+              "country": {
+                "type": "keyword"
+              },
+              "location": {
+                "type": "geo_point"
+              }
+            }
+          }
+        }
+      },
+      "port_scanning_attempts": {
+        "properties": {
+          "ip_address": {
+            "type": "keyword"
+          },
+          "ports": {
+            "type": "integer"
+          },
+          "first_seen": {
+            "type": "date"
+          },
+          "last_seen": {
+            "type": "date"
+          }
+        }
+      },
+      "traffic_spikes": {
+        "properties": {
+          "recent_traffic_count": {
+            "type": "integer"
+          },
+          "previous_traffic_count": {
+            "type": "integer"
+          },
+          "traffic_increase_percentage": {
+            "type": "float"
+          },
+          "is_spike": {
+            "type": "boolean"
+          }
+        }
+      },
+      "suspicious_transfers": {
+        "properties": {
+          "network_bytes": {
+            "type": "integer"
+          },
+          "@timestamp": {
+            "type": "date"
+          }
+        }
+      },
+      "exploitation_attempts": {
+        "properties": {
+          "ip_address": {
+            "type": "keyword"
+          },
+          "count": {
+            "type": "integer"
+          }
+        }
+      }
+    }
+  }
+}
+

@@ -1,0 +1,178 @@
+version: '3.8'
+
+networks:
+  servers_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.18.0.0/16
+        
+  monitoring_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.19.0.0/16
+
+services:
+  ssh_server:
+    build:
+      context: ./ssh_server
+      dockerfile: Dockerfile
+    container_name: ssh_server
+    networks:
+      servers_net:
+        ipv4_address: 172.18.0.2
+    ports:
+      - "2222:22"
+    depends_on:
+      - kibana
+      - elasticsearch
+    volumes:
+      - ssh_server-data:/data
+      - ./ssh_server/simulate_traffic.sh:/data/simulate_traffic.sh
+    # entrypoint: ["bash", "-c", "sleep 30 && /usr/share/filebeat/filebeat setup && filebeat -e"]
+
+
+  ftp_server:
+    build:
+      context: ./ftp_server  # Assuming you have a Dockerfile for the FTP server in this directory
+      dockerfile: Dockerfile
+    container_name: ftp_server
+    networks:
+      servers_net:
+        ipv4_address: 172.18.0.3
+    ports:
+      - "21:21"  # FTP control port
+      - "20:20"  # FTP data transfer port
+    volumes:
+      - ftp-logs:/var/log/vsftpd  # Mount the FTP log directory as a volume
+    depends_on:
+      - kibana
+      - elasticsearch
+
+  # mail_server:
+  #   build:
+  #     context: ./mail_server
+  #     dockerfile: Dockerfile
+  #   container_name: mail_server
+  #   networks:
+  #     servers_net:
+  #       ipv4_address: 172.18.0.3
+  #   ports:
+  #     - "25:25"
+  #     - "587:587"
+  #     - "993:993"
+  #   environment:
+  #     - ENABLE_SPAMASSASSIN=1
+  #     - SPAMASSASSIN_SPAM_TO_INBOX=1
+  #     - ENABLE_CLAMAV=1
+  #     - ENABLE_POSTGREY=0
+  #     - ENABLE_SASLAUTHD=0
+  #   volumes:
+  #     - maildata:/var/mail
+  #     - mailstate:/var/mail-state
+  #     - maillogs:/var/log/mail
+
+  # mail_client:
+  #   build:
+  #     context: ./mail_client
+  #     dockerfile: Dockerfile
+  #   container_name: mail_client
+  #   networks:
+  #     servers_net:
+  #       ipv4_address: 172.18.0.4
+  #   depends_on:
+  #     - mail_server
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.15.1
+    container_name: elasticsearch
+    networks:
+      monitoring_net:
+        ipv4_address: 172.19.0.2
+      servers_net:
+        ipv4_address: 172.18.0.12
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=true  # Enable security features
+      - ELASTIC_PASSWORD=argusIsTheBest123
+    ports:
+      - "9200:9200"
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data
+  
+  kibana:
+    image: docker.elastic.co/kibana/kibana:7.15.1
+    container_name: kibana
+    networks:
+      monitoring_net:
+        ipv4_address: 172.19.0.3
+      servers_net:
+        ipv4_address: 172.18.0.13
+    ports:
+      - "5601:5601"
+    environment:
+      - "ELASTICSEARCH_USERNAME=elastic"
+      - "ELASTICSEARCH_PASSWORD=argusIsTheBest123"
+    depends_on:
+      - elasticsearch
+    volumes:
+      - kibana-data:/usr/share/kibana/data
+      - kibana.yml:/usr/share/kibana/kibana.yml
+
+  argus:
+    build:
+      context: ./argus
+      dockerfile: Dockerfile
+    container_name: argus
+    networks:
+      monitoring_net:
+        ipv4_address: 172.19.0.4
+      servers_net:
+        ipv4_address: 172.18.0.14
+    volumes:
+      - ./argus:/argus
+      - shared-data:/shared
+    depends_on:
+      - elasticsearch
+      - kibana
+      - ssh_server
+    entrypoint: ["/argus/start_monitoring.sh"]
+  
+  webapp:
+    build:
+      context: ./webapp
+      dockerfile: Dockerfile
+    container_name: webapp
+    networks:
+      monitoring_net:
+        ipv4_address: 172.19.0.5
+    ports:
+      - "5000:5000"
+    depends_on:
+      - elasticsearch
+      - argus
+    volumes:
+      - shared-data:/shared
+  
+  intruder:
+    build:
+      context: ./intruder
+      dockerfile: Dockerfile
+    container_name: intruder
+    networks:
+      servers_net:
+        ipv4_address: 172.18.0.100
+
+volumes:
+  maildata:
+  mailstate:
+  maillogs:
+  logs:
+  elasticsearch-data:
+  kibana-data:
+  kibana.yml: 
+  ssh_server-data:
+  shared-data:
+  ftp-logs:
+  argus_shared_data:
